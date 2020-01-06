@@ -90,7 +90,7 @@ rm(Day1Before)
 # newdata$Class <- as.factor(newdata$Class)
 newdata$Class <- factor(as.integer(newdata$HU_load_actual_entsoe_transparency))
 
-colnames(newdata) <- c("Time", "Load_Now", "Hour", "Load_Min15", "Load_Day1B", "Class")
+colnames(newdata) <- c("Time", "Load_Now", "Hour", "Load_Min15", "Load_Day1B", "Class", "ClassPredict", "ClassPre_Shift")
 # newdata[,4:5]
 
 
@@ -101,6 +101,18 @@ newdata$ClassPredict <- predict(Tree, newdata[,4:5], type = "class")
 newdata$ClassPre_Shift <- c(as.numeric(as.character(newdata$ClassPredict[2:length(newdata$ClassPredict)])), as.numeric(as.character(newdata$ClassPredict[length(newdata$ClassPredict)])))
 
 # --- MAL i MAE -> sprawdzenie odchylenia prognozy --- #
-MAL <- sum(abs(newdata$Load_Now - newdata$ClassPre_Shift))
-MAE <- sum(abs(newdata$Load_Now - newdata$ClassPre_Shift) / newdata$Load_Now)
+MAE <- sum(abs(newdata$Load_Now - newdata$ClassPre_Shift)) / length(newdata$Load_Now)
+MAPE <- sum(abs(newdata$Load_Now - newdata$ClassPre_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
+# --- Prognoza Naiwna --- #
+Naiwna <- HU_Data %>% filter(utc_timestamp > (rok_start2) & utc_timestamp < end2)
+Naiwna$godzina <- hour(Naiwna$utc_timestamp)
+Naiwna$Predict <- HU_Data %>% filter(utc_timestamp > (rok_start2-minutes(15)) & utc_timestamp < end2-minutes(15)) %>% select(HU_load_actual_entsoe_transparency)
+Naiwna$Predict <- as.matrix(Naiwna$Predict)
+colnames(Naiwna) <- c("Time", "Load_Now", "Hour", "Predict")
+
+MAE_Naiwna <- sum(abs(Naiwna$Load_Now - Naiwna$Predict)) / length(Naiwna$Load_Now)
+MAPE_Naiwna <- sum(abs(Naiwna$Load_Now - Naiwna$Predict) / Naiwna$Load_Now) / length(Naiwna$Load_Now) * 100
+
+  
+  
