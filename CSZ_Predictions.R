@@ -3,6 +3,7 @@
 
 
 # https://stackoverflow.com/questions/43880823/subset-dataframe-based-on-posixct-date-and-time-greater-than-datetime-using-dply
+# https://stackoverflow.com/questions/38396516/dplyr-filter-based-on-another-column
 # https://data.library.virginia.edu/working-with-dates-and-time-in-r-using-the-lubridate-package/
 # https://www.r-bloggers.com/how-to-filter-in-r-a-detailed-introduction-to-the-dplyr-filter-function/
 # https://blog.exploratory.io/filter-data-with-dplyr-76cf5f1a258e
@@ -66,6 +67,9 @@ colnames(Temp) <- c("Time", "Load_Now", "Hour", "Load_Min15", "Load_Day1B", "Cla
 
 # --- Testy na Drzewie --- #
 Tree <- rpart(Class ~ Load_Min15 + Load_Day1B, Temp, method = "class", minsplit = 1, minbucket = 1, cp=0.000001)
+Tree_Anova <- rpart(Load_Now ~ Load_Min15 + Load_Day1B, Temp, minsplit = 1, minbucket = 1, cp=0.000001)
+Tree_Anova_H <- rpart(Load_Now ~ Load_Min15 + Load_Day1B + Hour, Temp, minsplit = 1, minbucket = 1, cp=0.000001)
+
 # printcp(Tree)
 # plotcp(Tree)
 # rpart.plot(Tree, type=1, extra=1)
@@ -96,13 +100,22 @@ colnames(newdata) <- c("Time", "Load_Now", "Hour", "Load_Min15", "Load_Day1B", "
 
 # --- Predykcja na nowym roku --- #
 newdata$ClassPredict <- predict(Tree, newdata[,4:5], type = "class")
+newdata$ClassPredictAnova <- predict(Tree_Anova, newdata[,4:5])
+newdata$ClassPredictAnovaH <- predict(Tree_Anova_H, newdata[,3:5])
+
 
 # --- Shift predykcji o jedno w górę -> lepsza korelacja --- #
 newdata$ClassPre_Shift <- c(as.numeric(as.character(newdata$ClassPredict[2:length(newdata$ClassPredict)])), as.numeric(as.character(newdata$ClassPredict[length(newdata$ClassPredict)])))
+newdata$ClassPreAnova_Shift <- c(as.numeric(as.character(newdata$ClassPredictAnova[2:length(newdata$ClassPredictAnova)])), as.numeric(as.character(newdata$ClassPredictAnova[length(newdata$ClassPredictAnova)])))
+newdata$ClassPreAnovaH_Shift <- c(as.numeric(as.character(newdata$ClassPredictAnovaH[2:length(newdata$ClassPredictAnovaH)])), as.numeric(as.character(newdata$ClassPredictAnovaH[length(newdata$ClassPredictAnovaH)])))
+
 
 # --- MAL i MAE -> sprawdzenie odchylenia prognozy --- #
 MAE <- sum(abs(newdata$Load_Now - newdata$ClassPre_Shift)) / length(newdata$Load_Now)
 MAPE <- sum(abs(newdata$Load_Now - newdata$ClassPre_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+
+MAE_Anova <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova_Shift)) / length(newdata$Load_Now)
+MAPE_Anova <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
 # --- Prognoza Naiwna --- #
 Naiwna <- HU_Data %>% filter(utc_timestamp > (rok_start2) & utc_timestamp < end2)
