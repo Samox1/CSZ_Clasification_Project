@@ -117,6 +117,9 @@ MAPE <- sum(abs(newdata$Load_Now - newdata$ClassPre_Shift) / newdata$Load_Now) /
 MAE_Anova <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova_Shift)) / length(newdata$Load_Now)
 MAPE_Anova <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
+MAE_AnovaH <- sum(abs(newdata$Load_Now - newdata$ClassPreAnovaH_Shift)) / length(newdata$Load_Now)
+MAPE_AnovaH <- sum(abs(newdata$Load_Now - newdata$ClassPreAnovaH_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+
 # --- Prognoza Naiwna --- #
 Naiwna <- HU_Data %>% filter(utc_timestamp > (rok_start2) & utc_timestamp < end2)
 Naiwna$godzina <- hour(Naiwna$utc_timestamp)
