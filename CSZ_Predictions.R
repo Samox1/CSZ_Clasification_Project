@@ -14,6 +14,7 @@ library(readr)
 library(MASS)
 library(e1071)
 library(rpart)
+library(randomForest)
 library(rpart.plot)
 library(tidyverse)
 library(lubridate)
@@ -74,6 +75,17 @@ Tree_Anova_H <- rpart(Load_Now ~ Load_Min15 + Load_Day1B + Hour, Temp, minsplit 
 # plotcp(Tree)
 # rpart.plot(Tree, type=1, extra=1)
 
+# --- Random Forest --- #                                                                     # Sprawdzic z godzinami - H
+rf <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, ntree = 10)               # -------------------------
+rf100 <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, ntree = 100)           # -------------------------
+# rf.pred <- predict(rf, newdata = newdata)                                                   # -------------------------
+newdata$RFpred <- predict(rf, newdata = newdata)                                              # -------------------------
+newdata$RF100pred <- predict(rf100, newdata = newdata)                                        # -------------------------
+
+# --- SVM --- #                                                                                                           # Zrobic SVM
+SVM_Data <- svm(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, kernel="radial" , cost = 1, gamma = 2, scale = F)        # ----------
+newdata$SVM <- predict(SVM_Data, newdata[,4:5])                                                                           # ----------
+
 
 
 # --- Nowe dane --- #
@@ -108,6 +120,8 @@ newdata$ClassPredictAnovaH <- predict(Tree_Anova_H, newdata[,3:5])
 newdata$ClassPre_Shift <- c(as.numeric(as.character(newdata$ClassPredict[2:length(newdata$ClassPredict)])), as.numeric(as.character(newdata$ClassPredict[length(newdata$ClassPredict)])))
 newdata$ClassPreAnova_Shift <- c(as.numeric(as.character(newdata$ClassPredictAnova[2:length(newdata$ClassPredictAnova)])), as.numeric(as.character(newdata$ClassPredictAnova[length(newdata$ClassPredictAnova)])))
 newdata$ClassPreAnovaH_Shift <- c(as.numeric(as.character(newdata$ClassPredictAnovaH[2:length(newdata$ClassPredictAnovaH)])), as.numeric(as.character(newdata$ClassPredictAnovaH[length(newdata$ClassPredictAnovaH)])))
+newdata$RFPre_Shift <- c(as.numeric(as.character(newdata$RFpred[2:length(newdata$RFpred)])), as.numeric(as.character(newdata$RFpred[length(newdata$RFpred)])))
+newdata$RF100Pre_Shift <- c(as.numeric(as.character(newdata$RF100pred[2:length(newdata$RF100pred)])), as.numeric(as.character(newdata$RF100pred[length(newdata$RF100pred)])))
 
 
 # --- MAL i MAE -> sprawdzenie odchylenia prognozy --- #
@@ -120,6 +134,13 @@ MAPE_Anova <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova_Shift) / newdata$
 MAE_AnovaH <- sum(abs(newdata$Load_Now - newdata$ClassPreAnovaH_Shift)) / length(newdata$Load_Now)
 MAPE_AnovaH <- sum(abs(newdata$Load_Now - newdata$ClassPreAnovaH_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
+MAE_RF <- sum(abs(newdata$Load_Now - newdata$RFPre_Shift)) / length(newdata$Load_Now)
+MAPE_RF <- sum(abs(newdata$Load_Now - newdata$RFPre_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+
+MAE_RF100 <- sum(abs(newdata$Load_Now - newdata$RF100Pre_Shift)) / length(newdata$Load_Now)
+MAPE_RF100 <- sum(abs(newdata$Load_Now - newdata$RF100Pre_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+
+
 # --- Prognoza Naiwna --- #
 Naiwna <- HU_Data %>% filter(utc_timestamp > (rok_start2) & utc_timestamp < end2)
 Naiwna$godzina <- hour(Naiwna$utc_timestamp)
@@ -129,6 +150,9 @@ colnames(Naiwna) <- c("Time", "Load_Now", "Hour", "Predict")
 
 MAE_Naiwna <- sum(abs(Naiwna$Load_Now - Naiwna$Predict)) / length(Naiwna$Load_Now)
 MAPE_Naiwna <- sum(abs(Naiwna$Load_Now - Naiwna$Predict) / Naiwna$Load_Now) / length(Naiwna$Load_Now) * 100
+
+
+
 
   
   
