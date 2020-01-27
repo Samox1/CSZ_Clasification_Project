@@ -68,6 +68,14 @@ Day1Before <- HU_Data %>% filter(utc_timestamp > (rok_start1-days(1)) & utc_time
 Temp$Day1B <- cbind(as.matrix(Day1Before))
 rm(Day1Before)
 
+Day1Before15Min <- HU_Data %>% filter(utc_timestamp > (rok_start1-days(1)-minutes(15)) & utc_timestamp < end1-days(1)-minutes(15)) %>% select(HU_load_actual_entsoe_transparency)
+Temp$Load_Day1B15min <- cbind(as.matrix(Day1Before15Min))
+rm(Day1Before15Min)
+
+Day1Beforep15Min <- HU_Data %>% filter(utc_timestamp > (rok_start1-days(1)+minutes(15)) & utc_timestamp < end1-days(1)+minutes(15)) %>% select(HU_load_actual_entsoe_transparency)
+Temp$Load_Day1Bp15min <- cbind(as.matrix(Day1Beforep15Min))
+rm(Day1Beforep15Min)
+
 # Temp$Class <- as.integer(Temp$HU_load_actual_entsoe_transparency - minMW)
 Temp$Class <- Temp$HU_load_actual_entsoe_transparency
 # Temp$Class <- factor(Temp$Class)
@@ -110,6 +118,12 @@ rf100_H <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, 
 # SVM_Data_v12 <- svm(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=10000, scale = F)  # <-- v12: MAE=7.980 | MAPE=0.165
 # SVM_Data_v13 <- svm(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, kernel="radial", probability=TRUE, gamma=0.00000000001, cost=10000, scale = F) # <-- v13: MAE=24.763 | MAPE=0.503
 
+# SVM_Tune_v1 <- tune(svm, Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, validation.x = newdata[,4:5], validation.y = newdata$Load_Now,  
+#             ranges = list(gamma = c(10^(-11:-6),(10^(-11:-6))/2), cost = 10^(3:5)),
+#             tunecontrol = tune.control(sampling = "fix")
+# )
+
+
 # SVM_Data_H <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=10000, scale = F)      # <-- Hv1: MAE=13.522 | MAPE=0.272
 # SVM_Data_H <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=100000, scale = F)     # <-- Hv2: MAE=15.388 | MAPE=0.328
 # SVM_Data_H <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, kernel="radial", probability=TRUE, gamma=0.00000001, cost=10000, scale = F)     # <-- Hv3: MAE=11.772 | MAPE=0.257
@@ -138,6 +152,13 @@ SVM_Data_3045 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Min30 + Load_Min4
 SVM_Data_3045 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Min30 + Load_Min45, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=10000, scale = F)   # <-- 3045v5: MAE= | MAPE=
 SVM_Data_3045 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Min30 + Load_Min45, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=100000, scale = F)  # <-- 3045v6: MAE= | MAPE=
 
+# 1Day + 1Day-15Min + 1Day+15Min
+SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=10000, scale = F)   # <-- 1Dayv1: MAE= | MAPE=
+SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=100000, scale = F)   # <-- 1Dayv2: MAE= | MAPE=
+
+
+SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=10000, scale = F)   # <-- 1Dayv4: MAE= | MAPE=
+
 
 # --- kNN --- #
 kNN_wyniki <- data.frame()
@@ -164,7 +185,8 @@ rm(Min15Before)
 Min30Before <- HU_Data %>% filter(utc_timestamp > (rok_start2-minutes(30)) & utc_timestamp < end2-minutes(30)) %>% select(HU_load_actual_entsoe_transparency)
 newdata$Load_Min30 <- cbind(as.matrix(Min30Before))
 rm(Min30Before)
-# names(newdata)[names(newdata) == "Load_min30"] <- "Load_Min30"
+names(newdata)[37] <- "Load_Day1Bp15min"
+
 
 Min45Before <- HU_Data %>% filter(utc_timestamp > (rok_start2-minutes(45)) & utc_timestamp < end2-minutes(45)) %>% select(HU_load_actual_entsoe_transparency)
 newdata$Load_Min45 <- cbind(as.matrix(Min45Before))   # Columna 31
@@ -172,8 +194,18 @@ rm(Min45Before)
 
 Day1Before <- HU_Data %>% filter(utc_timestamp > (rok_start2-days(1)) & utc_timestamp < end2-days(1)) %>% select(HU_load_actual_entsoe_transparency)
 newdata$Day1B <- cbind(as.matrix(Day1Before))
-newdata$Day1B <- as.matrix(newdata$Day1B)
+# newdata$Day1B <- as.matrix(newdata$Day1B)
 rm(Day1Before)
+
+Day1BeforeM15Min <- HU_Data %>% filter(utc_timestamp > (rok_start2-days(1)-minutes(15)) & utc_timestamp < end2-days(1)-minutes(15)) %>% select(HU_load_actual_entsoe_transparency)
+newdata$Load_Day1B15min <- cbind(as.matrix(Day1BeforeM15Min))      # Column: 36
+# newdata$Day1B <- as.matrix(newdata$Day1B)
+rm(Day1BeforeM15Min)
+
+Day1BeforeP15Min <- HU_Data %>% filter(utc_timestamp > (rok_start2-days(1)+minutes(15)) & utc_timestamp < end2-days(1)+minutes(15)) %>% select(HU_load_actual_entsoe_transparency)
+newdata$Load_Day1Bp15min <- cbind(as.matrix(Day1BeforeP15Min))     # Column: 37
+# newdata$Day1B <- as.matrix(newdata$Day1B)
+rm(Day1BeforeP15Min)
 
 # newdata$Class <- as.integer(newdata$HU_load_actual_entsoe_transparency - minMW)
 newdata$Class <- newdata$HU_load_actual_entsoe_transparency
@@ -205,6 +237,8 @@ newdata$SVM_H30 <- predict(SVM_Data_H30, newdata[,c(3:5,26)])         # Load_Min
 newdata$SVM_30 <- predict(SVM_Data_30, newdata[,c(4,5,26)])           # Load_Min15 + Load_Day1B + Load_Min30
 newdata$SVM_3045 <- predict(SVM_Data_3045, newdata[,c(4,5,26,31)])    # Load_Min15 + Load_Day1B + Load_Min30 + Load_Min45
 
+newdata$SVM_1Day <- predict(SVM_Data_1Day, newdata[,c(4,5,36,37)])    # Load_Min15 + Load_Day1B + Load_Min30 + Load_Min45
+
 
 # --- Shift predykcji o jedno w górę -> lepsza korelacja --- #
 # newdata$ClassPre_Shift <- c(as.numeric(as.character(newdata$ClassPredict[2:length(newdata$ClassPredict)])), as.numeric(as.character(newdata$ClassPredict[length(newdata$ClassPredict)])))
@@ -223,6 +257,8 @@ newdata$SVM_H30_Shift <- c(as.numeric(as.character(newdata$SVM_H30[2:length(newd
 
 newdata$SVM_30_Shift <- c(as.numeric(as.character(newdata$SVM_30[2:length(newdata$SVM_30)])), as.numeric(as.character(newdata$SVM_30[length(newdata$SVM_30)])))
 newdata$SVM_3045_Shift <- c(as.numeric(as.character(newdata$SVM_3045[2:length(newdata$SVM_3045)])), as.numeric(as.character(newdata$SVM_3045[length(newdata$SVM_3045)])))
+
+newdata$SVM_1Day_Shift <- c(as.numeric(as.character(newdata$SVM_1Day[2:length(newdata$SVM_1Day)])), as.numeric(as.character(newdata$SVM_1Day[length(newdata$SVM_1Day)])))
 
 
 # --- MAL i MAE -> sprawdzenie odchylenia prognozy --- #
@@ -269,6 +305,10 @@ MAPE_SVM_30_v6 <- sum(abs(newdata$Load_Now - newdata$SVM_30_Shift) / newdata$Loa
 # --- + Load_Min30 + Load_Min45 --- #
 MAE_SVM_3045_v6 <- sum(abs(newdata$Load_Now - newdata$SVM_3045_Shift)) / length(newdata$Load_Now)
 MAPE_SVM_3045_v6 <- sum(abs(newdata$Load_Now - newdata$SVM_3045_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+
+# --- + Day1B15Min + Day1BP15Min --- #
+MAE_SVM_1Day_v4 <- sum(abs(newdata$Load_Now - newdata$SVM_1Day_Shift)) / length(newdata$Load_Now)
+MAPE_SVM_1Day_v4 <- sum(abs(newdata$Load_Now - newdata$SVM_1Day_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
 
 
