@@ -95,10 +95,10 @@ Tree_Anova_H <- rpart(Load_Now ~ Load_Min15 + Load_Day1B + Hour, Temp, minsplit 
 # rpart.plot(Tree, type=1, extra=1)
 
 # --- Random Forest --- #                                                                     # Sprawdzic z godzinami - H
-rf <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, ntree = 10)               # -------------------------
+rf <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, ntree = 10
 rf100 <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, ntree = 100)           # -------------------------
 rf_H <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, ntree = 10)      # + Hour
-rf100_H <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, ntree = 100)  # + Hour
+rf100_H <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, ntree = 100)  # + Hourc
 # rf.pred <- predict(rf, newdata = newdata)                                                   # -------------------------
 # newdata$RFpred <- predict(rf, newdata = newdata)                                            # -------------------------
 # newdata$RF100pred <- predict(rf100, newdata = newdata)                                      # -------------------------
