@@ -145,10 +145,9 @@ MAPE_C <- c(MAPE_SVM_v1,MAPE_SVM_v2,MAPE_SVM_v3,MAPE_SVM_v4,MAPE_SVM_v5,MAPE_SVM
 p <- plot_ly(x=gammas, y=costs, z=MAPE_C)
 p
 
-# SVM_Tune_v1 <- tune(svm, Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, validation.x = newdata[,4:5], validation.y = newdata$Load_Now,  
-#             ranges = list(gamma = c(10^(-11:-6),(10^(-11:-6))/2), cost = 10^(3:5)),
-#             tunecontrol = tune.control(sampling = "fix")
-# )
+SVM_Tune_v1 <- tune(svm, Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, validation.x = newdata[,4:5], validation.y = newdata$Load_Now,
+            ranges = list(gamma = c(10^(-12:-5),(10^(-12:-5))/2), cost = 10^(2:8)),
+            tunecontrol = tune.control(sampling = "fix", performances = TRUE ))
 
 
 # SVM_Data_H <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=10000, scale = F)      # <-- Hv1: MAE=13.522 | MAPE=0.272
@@ -180,12 +179,12 @@ SVM_Data_3045 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Min30 + Load_Min4
 SVM_Data_3045 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Min30 + Load_Min45, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=100000, scale = F)  # <-- 3045v6: MAE= | MAPE=
 
 # 1Day + 1Day-15Min + 1Day+15Min
-SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=10000, scale = F)      # <-- 1Dayv1: MAE= | MAPE=
-SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=100000, scale = F)     # <-- 1Dayv2: MAE= | MAPE=
-SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.00000001, cost=10000, scale = F)     # <-- 1Dayv3: MAE= | MAPE=
-SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=1000, scale = F)    # <-- 1Dayv4: MAE= | MAPE=
-SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=10000, scale = F)   # <-- 1Dayv5: MAE= | MAPE=
-SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=100000, scale = F)  # <-- 1Dayv6: MAE= | MAPE=
+SVM_Data_1Day1 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=10000, scale = F)      # <-- 1Dayv1: MAE= | MAPE=
+SVM_Data_1Day2 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=100000, scale = F)     # <-- 1Dayv2: MAE= | MAPE=
+SVM_Data_1Day3 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.00000001, cost=10000, scale = F)     # <-- 1Dayv3: MAE= | MAPE=
+SVM_Data_1Day4 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=1000, scale = F)    # <-- 1Dayv4: MAE= | MAPE=
+SVM_Data_1Day5 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=10000, scale = F)   # <-- 1Dayv5: MAE= | MAPE=
+SVM_Data_1Day6 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=100000, scale = F)  # <-- 1Dayv6: MAE= | MAPE=
 
 
 # --- kNN --- #
@@ -277,7 +276,7 @@ newdata$SVM_H30 <- predict(SVM_Data_H30, newdata[,c(3:5,26)])         # Load_Min
 newdata$SVM_30 <- predict(SVM_Data_30, newdata[,c(4,5,26)])           # Load_Min15 + Load_Day1B + Load_Min30
 newdata$SVM_3045 <- predict(SVM_Data_3045, newdata[,c(4,5,26,31)])    # Load_Min15 + Load_Day1B + Load_Min30 + Load_Min45
 
-newdata$SVM_1Day <- predict(SVM_Data_1Day, newdata[,c(4,5,36,37)])    # Load_Min15 + Load_Day1B + Load_Min30 + Load_Min45
+newdata$SVM_1Day <- predict(SVM_Data_1Day6, newdata[,c(4,5,36,37)])    # Load_Min15 + Load_Day1B + Load_Min30 + Load_Min45
 
 
 # --- Shift predykcji o jedno w górę -> lepsza korelacja --- #
@@ -383,8 +382,8 @@ MAE_SVM_3045_v6 <- sum(abs(newdata$Load_Now - newdata$SVM_3045_Shift)) / length(
 MAPE_SVM_3045_v6 <- sum(abs(newdata$Load_Now - newdata$SVM_3045_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
 # --- + Day1B15Min + Day1BP15Min --- #
-MAE_SVM_1Day_v1 <- sum(abs(newdata$Load_Now - newdata$SVM_1Day_Shift)) / length(newdata$Load_Now)
-MAPE_SVM_1Day_v1 <- sum(abs(newdata$Load_Now - newdata$SVM_1Day_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_SVM_1Day_v6 <- sum(abs(newdata$Load_Now - newdata$SVM_1Day_Shift)) / length(newdata$Load_Now)
+MAPE_SVM_1Day_v6 <- sum(abs(newdata$Load_Now - newdata$SVM_1Day_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
 
 
