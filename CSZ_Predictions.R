@@ -149,6 +149,10 @@ SVM_Tune_v1 <- tune(svm, Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, valida
             ranges = list(gamma = c(10^(-12:-5),(10^(-12:-5))/2), cost = 10^(2:8)),
             tunecontrol = tune.control(sampling = "fix", performances = TRUE ))
 
+SVM_H_Tune_v1 <- tune(svm, Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, validation.x = newdata[,3:5], validation.y = newdata$Load_Now,
+                    ranges = list(gamma = c(10^(-12:-5),(10^(-12:-5))/2), cost = 10^(2:8)),
+                    tunecontrol = tune.control(sampling = "fix", performances = TRUE ))
+
 
 # SVM_Data_H <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=10000, scale = F)      # <-- Hv1: MAE=13.522 | MAPE=0.272
 # SVM_Data_H <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=100000, scale = F)     # <-- Hv2: MAE=15.388 | MAPE=0.328
@@ -270,6 +274,8 @@ newdata$RF100pred_1Day <- predict(rf100_1Day, newdata[,c(4,5,36,37)])         # 
 
 
 newdata$SVM <- predict(SVM_Data, newdata[,4:5])                       # Load_Min15 + Load_Day1B
+newdata$SVM_Tune_v1 <- predict(SVM_Tune_v1$best.model, newdata[,4:5])                       # Load_Min15 + Load_Day1B
+
 newdata$SVM_H <- predict(SVM_Data_H, newdata[,3:5])                   # Load_Min15 + Load_Day1B + Hour
 newdata$SVM_H30 <- predict(SVM_Data_H30, newdata[,c(3:5,26)])         # Load_Min15 + Load_Day1B + Hour + Load_Min30
 
@@ -304,6 +310,8 @@ newdata$RF100Pre_1Day_Shift <- c(as.numeric(as.character(newdata$RF100pred_1Day[
 
 
 newdata$SVM_Shift <- c(as.numeric(as.character(newdata$SVM[2:length(newdata$SVM)])), as.numeric(as.character(newdata$SVM[length(newdata$SVM)])))
+newdata$SVM_Tune_v1_Shift <- c(as.numeric(as.character(newdata$SVM_Tune_v1[2:length(newdata$SVM_Tune_v1)])), as.numeric(as.character(newdata$SVM_Tune_v1[length(newdata$SVM_Tune_v1)])))
+
 newdata$SVM_H_Shift <- c(as.numeric(as.character(newdata$SVM_H[2:length(newdata$SVM_H)])), as.numeric(as.character(newdata$SVM_H[length(newdata$SVM_H)])))
 newdata$SVM_H30_Shift <- c(as.numeric(as.character(newdata$SVM_H30[2:length(newdata$SVM_H30)])), as.numeric(as.character(newdata$SVM_H30[length(newdata$SVM_H30)])))
 
@@ -362,6 +370,9 @@ MAPE_RF100_1Day <- sum(abs(newdata$Load_Now - newdata$RF100Pre_1Day_Shift) / new
 ### SVM ###
 MAE_SVM_v13 <- sum(abs(newdata$Load_Now - newdata$SVM_Shift)) / length(newdata$Load_Now)
 MAPE_SVM_v13 <- sum(abs(newdata$Load_Now - newdata$SVM_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_SVM_Tune_v1_1 <- sum(abs(newdata$Load_Now - newdata$SVM_Tune_v1_Shift)) / length(newdata$Load_Now)
+MAPE_SVM_Tune_v1_1 <- sum(abs(newdata$Load_Now - newdata$SVM_Tune_v1_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+
 
 # --- + Hour --- #
 MAE_SVM_H_v6 <- sum(abs(newdata$Load_Now - newdata$SVM_H_Shift)) / length(newdata$Load_Now)
