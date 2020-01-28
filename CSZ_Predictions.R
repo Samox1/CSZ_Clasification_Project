@@ -22,8 +22,9 @@ library(data.table)
 library(stringr)
 library(caret)
 library(FNN)
+library(plotly)
 
-rm(list = ls())
+rm(list = ls())            # Czyszczenie Globalnego Srodowiska 
 
 HU_Data_ALL <- as.data.frame(read.table("HU_TS_15_min.csv",header=TRUE,sep=","))
 HU_Data_ALL$utc_timestamp <- as.data.frame(ymd_hms(HU_Data_ALL$utc_timestamp, tz = "UTC"))
@@ -89,16 +90,34 @@ Temp$Hour <- as.factor(Temp$Hour)
 Tree_Anova <- rpart(Load_Now ~ Load_Min15 + Load_Day1B, Temp, minsplit = 1, minbucket = 1, cp=0.000001)
 Tree_Anova_30 <- rpart(Load_Now ~ Load_Min15 + Load_Day1B + Load_Min30, Temp, minsplit = 1, minbucket = 1, cp=0.000001)
 Tree_Anova_H <- rpart(Load_Now ~ Load_Min15 + Load_Day1B + Hour, Temp, minsplit = 1, minbucket = 1, cp=0.000001)
+Tree_Anova_H30 <- rpart(Load_Now ~ Load_Min15 + Load_Min30 + Load_Day1B + Hour, Temp, minsplit = 1, minbucket = 1, cp=0.000001)
+Tree_Anova_3045 <- rpart(Load_Now ~ Load_Min15 + Load_Min30 + Load_Min45 + Load_Day1B, Temp, minsplit = 1, minbucket = 1, cp=0.000001)
+Tree_Anova_1Day <- rpart(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, Temp, minsplit = 1, minbucket = 1, cp=0.000001)
 
 # printcp(Tree)
 # plotcp(Tree)
 # rpart.plot(Tree, type=1, extra=1)
 
 # --- Random Forest --- #                                                                     # Sprawdzic z godzinami - H
-rf <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, ntree = 10
+rf <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, ntree = 10)
 rf100 <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, ntree = 100)           # -------------------------
+
 rf_H <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, ntree = 10)      # + Hour
-rf100_H <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, ntree = 100)  # + Hourc
+rf100_H <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, ntree = 100)  # + Hour
+
+rf_H30 <- randomForest(Load_Now ~ Load_Min15 + Load_Min30 + Load_Day1B + Hour, data = Temp, ntree = 10)
+rf100_H30 <- randomForest(Load_Now ~ Load_Min15 + Load_Min30 + Load_Day1B + Hour, data = Temp, ntree = 100)  # + Hour
+
+rf_30 <- randomForest(Load_Now ~ Load_Min15 + Load_Min30 + Load_Day1B, data = Temp, ntree = 10)
+rf100_30 <- randomForest(Load_Now ~ Load_Min15 + Load_Min30 + Load_Day1B, data = Temp, ntree = 100)  # + Hour
+
+rf_3045 <- randomForest(Load_Now ~ Load_Min15 + Load_Min30 + Load_Min45 + Load_Day1B, data = Temp, ntree = 10)
+rf100_3045 <- randomForest(Load_Now ~ Load_Min15 + Load_Min30 + Load_Min45 + Load_Day1B, data = Temp, ntree = 100)  # + Hour
+
+rf_1Day <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, ntree = 10)
+rf100_1Day <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, ntree = 100)  # + Hour
+
+
 # rf.pred <- predict(rf, newdata = newdata)                                                   # -------------------------
 # newdata$RFpred <- predict(rf, newdata = newdata)                                            # -------------------------
 # newdata$RF100pred <- predict(rf100, newdata = newdata)                                      # -------------------------
@@ -117,6 +136,14 @@ rf100_H <- randomForest(Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, 
 # SVM_Data_v11 <- svm(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, kernel="radial", probability=TRUE, gamma=0.000000001, cost=1000, scale = F)    # <-- v11: MAE=8.184 | MAPE=0.169
 # SVM_Data_v12 <- svm(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=10000, scale = F)  # <-- v12: MAE=7.980 | MAPE=0.165
 # SVM_Data_v13 <- svm(Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, kernel="radial", probability=TRUE, gamma=0.00000000001, cost=10000, scale = F) # <-- v13: MAE=24.763 | MAPE=0.503
+
+gammas <- c(0.00005, 0.00001, 0.000005,0.000001,0.0000005,0.0000001,0.00000001,0.000000001,0.000000001,0.000000001,0.000000001,0.0000000001)
+costs <- c(2000,2000,5000,10000,10000,100000,100000,1000000,100000,10000,1000,10000)
+MAE_C <- c(MAE_SVM_v1,MAE_SVM_v2,MAE_SVM_v3,MAE_SVM_v4,MAE_SVM_v5,MAE_SVM_v6,MAE_SVM_v7,MAE_SVM_v8,MAE_SVM_v9,MAE_SVM_v10,MAE_SVM_v11,MAE_SVM_v12)
+MAPE_C <- c(MAPE_SVM_v1,MAPE_SVM_v2,MAPE_SVM_v3,MAPE_SVM_v4,MAPE_SVM_v5,MAPE_SVM_v6,MAPE_SVM_v7,MAPE_SVM_v8,MAPE_SVM_v9,MAPE_SVM_v10,MAPE_SVM_v11,MAPE_SVM_v12)
+
+p <- plot_ly(x=gammas, y=costs, z=MAPE_C)
+p
 
 # SVM_Tune_v1 <- tune(svm, Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, validation.x = newdata[,4:5], validation.y = newdata$Load_Now,  
 #             ranges = list(gamma = c(10^(-11:-6),(10^(-11:-6))/2), cost = 10^(3:5)),
@@ -153,11 +180,12 @@ SVM_Data_3045 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Min30 + Load_Min4
 SVM_Data_3045 <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Min30 + Load_Min45, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=100000, scale = F)  # <-- 3045v6: MAE= | MAPE=
 
 # 1Day + 1Day-15Min + 1Day+15Min
-SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=10000, scale = F)   # <-- 1Dayv1: MAE= | MAPE=
-SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=100000, scale = F)   # <-- 1Dayv2: MAE= | MAPE=
-
-
-SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=10000, scale = F)   # <-- 1Dayv4: MAE= | MAPE=
+SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=10000, scale = F)      # <-- 1Dayv1: MAE= | MAPE=
+SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000001, cost=100000, scale = F)     # <-- 1Dayv2: MAE= | MAPE=
+SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.00000001, cost=10000, scale = F)     # <-- 1Dayv3: MAE= | MAPE=
+SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=1000, scale = F)    # <-- 1Dayv4: MAE= | MAPE=
+SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=10000, scale = F)   # <-- 1Dayv5: MAE= | MAPE=
+SVM_Data_1Day <- svm(Load_Now ~ Load_Min15 + Load_Day1B + Load_Day1B15min + Load_Day1Bp15min, data = Temp, kernel="radial", probability=TRUE, gamma=0.0000000001, cost=100000, scale = F)  # <-- 1Dayv6: MAE= | MAPE=
 
 
 # --- kNN --- #
@@ -223,11 +251,23 @@ newdata$Hour <- as.factor(newdata$Hour)
 newdata$ClassPredictAnova <- predict(Tree_Anova, newdata[,4:5])
 newdata$ClassPredictAnova30 <- predict(Tree_Anova_30, newdata[,c(4,5,26)])
 newdata$ClassPredictAnovaH <- predict(Tree_Anova_H, newdata[,3:5])
+newdata$ClassPredictAnovaH30 <- predict(Tree_Anova_H30, newdata[,c(3:5,26)])
+newdata$ClassPredictAnova3045 <- predict(Tree_Anova_3045, newdata[,c(4,5,26,31)])
+newdata$ClassPredictAnova1Day <- predict(Tree_Anova_1Day, newdata[,c(4,5,36,37)])
+
 
 newdata$RFpred <- predict(rf, newdata = newdata[,4:5])                 # Load_Min15 + Load_Day1B
 newdata$RF100pred <- predict(rf100, newdata = newdata[,4:5])           # Load_Min15 + Load_Day1B
 newdata$RFpred_H <- predict(rf_H, newdata = newdata[,3:5])             # Load_Min15 + Load_Day1B + Hour
 newdata$RF100pred_H <- predict(rf100_H, newdata = newdata[,3:5])       # Load_Min15 + Load_Day1B + Hour
+newdata$RFpred_H30 <- predict(rf_H30, newdata[,c(3:5,26)])             # Load_Min15 + Load_Day1B + Hour + Load_Min30
+newdata$RF100pred_H30 <- predict(rf100_H30, newdata[,c(3:5,26)])       # Load_Min15 + Load_Day1B + Hour + Load_Min30
+newdata$RFpred_30 <- predict(rf_30, newdata[,c(4:5,26)])               # Load_Min15 + Load_Day1B + Load_Min30
+newdata$RF100pred_30 <- predict(rf100_30, newdata[,c(4:5,26)])         # Load_Min15 + Load_Day1B + Load_Min30
+newdata$RFpred_3045 <- predict(rf_3045, newdata[,c(4,5,26,31)])               # Load_Min15 + Load_Day1B + Load_Min30
+newdata$RF100pred_3045 <- predict(rf100_3045, newdata[,c(4,5,26,31)])         # Load_Min15 + Load_Day1B + Load_Min30
+newdata$RFpred_1Day <- predict(rf_1Day, newdata[,c(4,5,36,37)])               # Load_Min15 + Load_Day1B + Load_Min30
+newdata$RF100pred_1Day <- predict(rf100_1Day, newdata[,c(4,5,36,37)])         # Load_Min15 + Load_Day1B + Load_Min30
 
 
 newdata$SVM <- predict(SVM_Data, newdata[,4:5])                       # Load_Min15 + Load_Day1B
@@ -245,11 +285,24 @@ newdata$SVM_1Day <- predict(SVM_Data_1Day, newdata[,c(4,5,36,37)])    # Load_Min
 newdata$ClassPreAnova_Shift <- c(as.numeric(as.character(newdata$ClassPredictAnova[2:length(newdata$ClassPredictAnova)])), as.numeric(as.character(newdata$ClassPredictAnova[length(newdata$ClassPredictAnova)])))
 newdata$ClassPreAnova30_Shift <- c(as.numeric(as.character(newdata$ClassPredictAnova30[2:length(newdata$ClassPredictAnova30)])), as.numeric(as.character(newdata$ClassPredictAnova30[length(newdata$ClassPredictAnova30)])))
 newdata$ClassPreAnovaH_Shift <- c(as.numeric(as.character(newdata$ClassPredictAnovaH[2:length(newdata$ClassPredictAnovaH)])), as.numeric(as.character(newdata$ClassPredictAnovaH[length(newdata$ClassPredictAnovaH)])))
+newdata$ClassPreAnovaH30_Shift <- c(as.numeric(as.character(newdata$ClassPredictAnovaH30[2:length(newdata$ClassPredictAnovaH30)])), as.numeric(as.character(newdata$ClassPredictAnovaH30[length(newdata$ClassPredictAnovaH30)])))
+newdata$ClassPreAnova3045_Shift <- c(as.numeric(as.character(newdata$ClassPredictAnova3045[2:length(newdata$ClassPredictAnova3045)])), as.numeric(as.character(newdata$ClassPredictAnova3045[length(newdata$ClassPredictAnova3045)])))
+newdata$ClassPreAnova1Day_Shift <- c(as.numeric(as.character(newdata$ClassPredictAnova1Day[2:length(newdata$ClassPredictAnova1Day)])), as.numeric(as.character(newdata$ClassPredictAnova1Day[length(newdata$ClassPredictAnova1Day)])))
+
 
 newdata$RFPre_Shift <- c(as.numeric(as.character(newdata$RFpred[2:length(newdata$RFpred)])), as.numeric(as.character(newdata$RFpred[length(newdata$RFpred)])))
 newdata$RF100Pre_Shift <- c(as.numeric(as.character(newdata$RF100pred[2:length(newdata$RF100pred)])), as.numeric(as.character(newdata$RF100pred[length(newdata$RF100pred)])))
 newdata$RFPre_H_Shift <- c(as.numeric(as.character(newdata$RFpred_H[2:length(newdata$RFpred_H)])), as.numeric(as.character(newdata$RFpred_H[length(newdata$RFpred_H)])))
 newdata$RF100Pre_H_Shift <- c(as.numeric(as.character(newdata$RF100pred_H[2:length(newdata$RF100pred_H)])), as.numeric(as.character(newdata$RF100pred_H[length(newdata$RF100pred_H)])))
+newdata$RFPre_H30_Shift <- c(as.numeric(as.character(newdata$RFpred_H30[2:length(newdata$RFpred_H30)])), as.numeric(as.character(newdata$RFpred_H30[length(newdata$RFpred_H30)])))
+newdata$RF100Pre_H30_Shift <- c(as.numeric(as.character(newdata$RF100pred_H30[2:length(newdata$RF100pred_H30)])), as.numeric(as.character(newdata$RF100pred_H30[length(newdata$RF100pred_H30)])))
+newdata$RFPre_30_Shift <- c(as.numeric(as.character(newdata$RFpred_30[2:length(newdata$RFpred_30)])), as.numeric(as.character(newdata$RFpred_30[length(newdata$RFpred_30)])))
+newdata$RF100Pre_30_Shift <- c(as.numeric(as.character(newdata$RF100pred_30[2:length(newdata$RF100pred_30)])), as.numeric(as.character(newdata$RF100pred_30[length(newdata$RF100pred_30)])))
+newdata$RFPre_3045_Shift <- c(as.numeric(as.character(newdata$RFpred_3045[2:length(newdata$RFpred_3045)])), as.numeric(as.character(newdata$RFpred_3045[length(newdata$RFpred_3045)])))
+newdata$RF100Pre_3045_Shift <- c(as.numeric(as.character(newdata$RF100pred_3045[2:length(newdata$RF100pred_3045)])), as.numeric(as.character(newdata$RF100pred_3045[length(newdata$RF100pred_3045)])))
+newdata$RFPre_1Day_Shift <- c(as.numeric(as.character(newdata$RFpred_1Day[2:length(newdata$RFpred_1Day)])), as.numeric(as.character(newdata$RFpred_1Day[length(newdata$RFpred_1Day)])))
+newdata$RF100Pre_1Day_Shift <- c(as.numeric(as.character(newdata$RF100pred_1Day[2:length(newdata$RF100pred_1Day)])), as.numeric(as.character(newdata$RF100pred_1Day[length(newdata$RF100pred_1Day)])))
+
 
 newdata$SVM_Shift <- c(as.numeric(as.character(newdata$SVM[2:length(newdata$SVM)])), as.numeric(as.character(newdata$SVM[length(newdata$SVM)])))
 newdata$SVM_H_Shift <- c(as.numeric(as.character(newdata$SVM_H[2:length(newdata$SVM_H)])), as.numeric(as.character(newdata$SVM_H[length(newdata$SVM_H)])))
@@ -269,9 +322,15 @@ MAE_Anova <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova_Shift)) / length(n
 MAPE_Anova <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 MAE_Anova30 <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova30_Shift)) / length(newdata$Load_Now)
 MAPE_Anova30 <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova30_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_Anova3045 <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova3045_Shift)) / length(newdata$Load_Now)
+MAPE_Anova3045 <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova3045_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_Anova1Day <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova1Day_Shift)) / length(newdata$Load_Now)
+MAPE_Anova1Day <- sum(abs(newdata$Load_Now - newdata$ClassPreAnova1Day_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
 MAE_AnovaH <- sum(abs(newdata$Load_Now - newdata$ClassPreAnovaH_Shift)) / length(newdata$Load_Now)
 MAPE_AnovaH <- sum(abs(newdata$Load_Now - newdata$ClassPreAnovaH_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_AnovaH30 <- sum(abs(newdata$Load_Now - newdata$ClassPreAnovaH30_Shift)) / length(newdata$Load_Now)
+MAPE_AnovaH30 <- sum(abs(newdata$Load_Now - newdata$ClassPreAnovaH30_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
 ### Random Forest ###
 MAE_RF <- sum(abs(newdata$Load_Now - newdata$RFPre_Shift)) / length(newdata$Load_Now)
@@ -283,6 +342,23 @@ MAE_RF_H <- sum(abs(newdata$Load_Now - newdata$RFPre_H_Shift)) / length(newdata$
 MAPE_RF_H <- sum(abs(newdata$Load_Now - newdata$RFPre_H_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 MAE_RF100_H <- sum(abs(newdata$Load_Now - newdata$RF100Pre_H_Shift)) / length(newdata$Load_Now)
 MAPE_RF100_H <- sum(abs(newdata$Load_Now - newdata$RF100Pre_H_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_RF_H30 <- sum(abs(newdata$Load_Now - newdata$RFPre_H30_Shift)) / length(newdata$Load_Now)
+MAPE_RF_H30 <- sum(abs(newdata$Load_Now - newdata$RFPre_H30_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_RF100_H30 <- sum(abs(newdata$Load_Now - newdata$RF100Pre_H30_Shift)) / length(newdata$Load_Now)
+MAPE_RF100_H30 <- sum(abs(newdata$Load_Now - newdata$RF100Pre_H30_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_RF_30 <- sum(abs(newdata$Load_Now - newdata$RFPre_30_Shift)) / length(newdata$Load_Now)
+MAPE_RF_30 <- sum(abs(newdata$Load_Now - newdata$RFPre_30_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_RF100_30 <- sum(abs(newdata$Load_Now - newdata$RF100Pre_30_Shift)) / length(newdata$Load_Now)
+MAPE_RF100_30 <- sum(abs(newdata$Load_Now - newdata$RF100Pre_30_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_RF_3045 <- sum(abs(newdata$Load_Now - newdata$RFPre_3045_Shift)) / length(newdata$Load_Now)
+MAPE_RF_3045 <- sum(abs(newdata$Load_Now - newdata$RFPre_3045_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_RF100_3045 <- sum(abs(newdata$Load_Now - newdata$RF100Pre_3045_Shift)) / length(newdata$Load_Now)
+MAPE_RF100_3045 <- sum(abs(newdata$Load_Now - newdata$RF100Pre_3045_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_RF_1Day <- sum(abs(newdata$Load_Now - newdata$RFPre_1Day_Shift)) / length(newdata$Load_Now)
+MAPE_RF_1Day <- sum(abs(newdata$Load_Now - newdata$RFPre_1Day_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_RF100_1Day <- sum(abs(newdata$Load_Now - newdata$RF100Pre_1Day_Shift)) / length(newdata$Load_Now)
+MAPE_RF100_1Day <- sum(abs(newdata$Load_Now - newdata$RF100Pre_1Day_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+
 
 ### SVM ###
 MAE_SVM_v13 <- sum(abs(newdata$Load_Now - newdata$SVM_Shift)) / length(newdata$Load_Now)
@@ -307,8 +383,8 @@ MAE_SVM_3045_v6 <- sum(abs(newdata$Load_Now - newdata$SVM_3045_Shift)) / length(
 MAPE_SVM_3045_v6 <- sum(abs(newdata$Load_Now - newdata$SVM_3045_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
 # --- + Day1B15Min + Day1BP15Min --- #
-MAE_SVM_1Day_v4 <- sum(abs(newdata$Load_Now - newdata$SVM_1Day_Shift)) / length(newdata$Load_Now)
-MAPE_SVM_1Day_v4 <- sum(abs(newdata$Load_Now - newdata$SVM_1Day_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+MAE_SVM_1Day_v1 <- sum(abs(newdata$Load_Now - newdata$SVM_1Day_Shift)) / length(newdata$Load_Now)
+MAPE_SVM_1Day_v1 <- sum(abs(newdata$Load_Now - newdata$SVM_1Day_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
 
 
