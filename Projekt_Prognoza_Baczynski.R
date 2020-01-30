@@ -21,7 +21,7 @@ library(caret)
 library(plotly)
 
 # --- *** Import danych:
-rm(list = ls())            # Czyszczenie Globalnego Srodowiska 
+# rm(list = ls())            # Czyszczenie Globalnego Srodowiska 
 
 HU_Data_ALL <- as.data.frame(read.table("HU_TS_15_min.csv",header=TRUE,sep=","))
 HU_Data_ALL$utc_timestamp <- as.data.frame(ymd_hms(HU_Data_ALL$utc_timestamp, tz = "UTC"))
