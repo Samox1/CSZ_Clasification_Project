@@ -21,7 +21,7 @@ library(caret)
 library(plotly)
 
 # --- *** Import danych:
-# rm(list = ls())            # Czyszczenie Globalnego Srodowiska 
+rm(list = ls())            # Czyszczenie Globalnego Srodowiska
 
 HU_Data_ALL <- as.data.frame(read.table("HU_TS_15_min.csv",header=TRUE,sep=","))
 HU_Data_ALL$utc_timestamp <- as.data.frame(ymd_hms(HU_Data_ALL$utc_timestamp, tz = "UTC"))
@@ -270,16 +270,16 @@ MAPE_SVM_1Day <- sum(abs(newdata$Load_Now - newdata$SVM_1Day_Shift) / newdata$Lo
 
 ### Tune dla modelu SVM, uczony na: Load_Min15 + Load_Day1B
 # Ze wzgledu na czas obliczen ~ 5 godzin - zakomentowane 
-# Znaleziony najlepszy model SVM uzyskiwal wyniki na zbiorze testowym: MAE = 4,32 | MAPE = 0,089
+# Znaleziony najlepszy model SVM uzyskiwal wyniki na zbiorze testowym: MAE = 4,388 | MAPE = 0,089
 
-# SVM_Tune <- tune(svm, Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, validation.x = newdata, validation.y = newdata$Load_Now,
-#                   ranges = list(gamma = c(10^(-12:-5),(10^(-12:-5))/2), cost = 10^(2:8)),
-#                   tunecontrol = tune.control(sampling = "fix", performances = TRUE ))
+SVM_Tune <- tune(svm, Load_Now ~ Load_Min15 + Load_Day1B, data = Temp, validation.x = newdata, validation.y = newdata$Load_Now,
+                  ranges = list(gamma = c(10^(-12:-5),(10^(-12:-5))/2), cost = 10^(2:8)),
+                  tunecontrol = tune.control(sampling = "fix", performances = TRUE ))
 
-# newdata$SVM_Tune <- predict(SVM_Tune$best.model, newdata)                           # Load_Min15 + Load_Day1B
-# newdata$SVM_Tune_Shift <- c(as.numeric(as.character(newdata$SVM_Tune[2:length(newdata$SVM_Tune)])), as.numeric(as.character(newdata$SVM_Tune[length(newdata$SVM_Tune)])))
-# MAE_SVM_Tune <- sum(abs(newdata$Load_Now - newdata$SVM_Tune_Shift)) / length(newdata$Load_Now)
-# MAPE_SVM_Tune <- sum(abs(newdata$Load_Now - newdata$SVM_Tune_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+newdata$SVM_Tune <- predict(SVM_Tune$best.model, newdata)                           # Load_Min15 + Load_Day1B
+newdata$SVM_Tune_Shift <- c(as.numeric(as.character(newdata$SVM_Tune[2:length(newdata$SVM_Tune)])), as.numeric(as.character(newdata$SVM_Tune[length(newdata$SVM_Tune)])))
+MAE_SVM_Tune <- sum(abs(newdata$Load_Now - newdata$SVM_Tune_Shift)) / length(newdata$Load_Now)
+MAPE_SVM_Tune <- sum(abs(newdata$Load_Now - newdata$SVM_Tune_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
 
 ### Dane podsumowujace modele SVM uczone na: Load_Min15 + Load_Day1B
@@ -295,15 +295,16 @@ p                                             # Plot (automatyczny)
 
 
 ### Tune dla modelu SVM, uczony na: Load_Min15 + Load_Day1B + Hour
+# Znaleziony najlepszy model SVM uzyskiwal wyniki na zbiorze testowym: MAE = ~ 32,12 | MAPE = ~ 0,74
 
-# SVM_Tune_H <- tune(svm, Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, validation.x = newdata, validation.y = newdata$Load_Now,
-#                   ranges = list(gamma = c(10^(-12:-5),(10^(-12:-5))/2), cost = 10^(2:8)),
-#                   tunecontrol = tune.control(sampling = "fix", performances = TRUE ))
+SVM_Tune_H <- tune(svm, Load_Now ~ Load_Min15 + Load_Day1B + Hour, data = Temp, validation.x = newdata, validation.y = newdata$Load_Now,
+                  ranges = list(gamma = c(10^(-12:-5),(10^(-12:-5))/2), cost = 10^(2:8)),
+                  tunecontrol = tune.control(sampling = "fix", performances = TRUE ))
 
-# newdata$SVM_Tune <- predict(SVM_Tune_H$best.model, newdata)                           # Load_Min15 + Load_Day1B + Hour
-# newdata$SVM_Tune_Shift <- c(as.numeric(as.character(newdata$SVM_Tune[2:length(newdata$SVM_Tune)])), as.numeric(as.character(newdata$SVM_Tune[length(newdata$SVM_Tune)])))
-# MAE_SVM_Tune_H <- sum(abs(newdata$Load_Now - newdata$SVM_Tune_Shift)) / length(newdata$Load_Now)
-# MAPE_SVM_Tune_H <- sum(abs(newdata$Load_Now - newdata$SVM_Tune_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
+newdata$SVM_Tune <- predict(SVM_Tune_H$best.model, newdata)                           # Load_Min15 + Load_Day1B + Hour
+newdata$SVM_Tune_Shift <- c(as.numeric(as.character(newdata$SVM_Tune[2:length(newdata$SVM_Tune)])), as.numeric(as.character(newdata$SVM_Tune[length(newdata$SVM_Tune)])))
+MAE_SVM_Tune_H <- sum(abs(newdata$Load_Now - newdata$SVM_Tune_Shift)) / length(newdata$Load_Now)
+MAPE_SVM_Tune_H <- sum(abs(newdata$Load_Now - newdata$SVM_Tune_Shift) / newdata$Load_Now) / length(newdata$Load_Now) * 100
 
 
 
